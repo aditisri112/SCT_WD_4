@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do list</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --text-main: #3a3f47;
+            --text-muted: #8a92a6;
+            
+            /* Pastel Palette */
+            --pastel-blue: #d4e5f7;
+            --pastel-blue-hover: #b9d5f3;
+            --pastel-green: #d2ebd9;
+            --pastel-pink: #f7d6e0;
+            --pastel-purple: #e2dcf4;
+            --pastel-yellow: #fcf1d3;
+            --accent: #92a8d1;
+            
+            --radius-lg: 24px;
+            --radius-md: 16px;
+            --radius-sm: 12px;
+            --shadow: 0 10px 30px rgba(165, 175, 190, 0.15);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-attachment: fixed;
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        .app-container {
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 540px;
+            border-radius: var(--radius-lg);
+            padding: 2.5rem;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+        }
+
+        header {
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            color: #2c3038;
+            margin-bottom: 0.25rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        /* Lists / Categories Tabs */
+        .list-tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            padding-bottom: 5px;
+            scrollbar-width: none;
+        }
+        
+        .list-tabs::-webkit-scrollbar {
+            display: none;
+        }
+
+        .tab {
+            padding: 0.6rem 1.2rem;
+            background: rgba(255, 255, 255, 0.5);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .tab.active {
+            background: var(--text-main);
+            color: #fff;
+            border-color: var(--text-main);
+        }
+
+        /* Task Form */
+        .task-form {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin-bottom: 2rem;
+            background: rgba(255, 255, 255, 0.5);
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        input[type="text"], input[type="datetime-local"], select {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: var(--radius-sm);
+            background: #fff;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input[type="text"]:focus, input[type="datetime-local"]:focus, select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(146, 168, 209, 0.2);
+        }
+
+        .btn-add {
+            background: var(--pastel-blue);
+            color: #2c4a75;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-weight: 600;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap;
+        }
+
+        .btn-add:hover {
+            background: var(--pastel-blue-hover);
+            transform: translateY(-1px);
+        }
+
+        /* Task List Area */
+        .task-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .task-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 1rem 1.25rem;
+            border-radius: var(--radius-md);
+            background: #fff;
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.02);
+            transition: var(--transition);
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Color Coding based on List Selection */
+        .task-item.list-Personal { border-left-color: var(--pastel-pink); }
+        .task-item.list-Work { border-left-color: var(--pastel-blue); }
+        .task-item.list-Shopping { border-left-color: var(--pastel-yellow); }
+        .task-item.list-Ideas { border-left-color: var(--pastel-purple); }
+
+        .task-item.completed {
+            opacity: 0.6;
+            border-left-color: var(--pastel-green);
+        }
+
+        .task-item.completed .task-text {
+            text-decoration: line-through;
+            color: var(--text-muted);
+        }
+
+        .task-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+
+        .checkbox-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .checkbox-wrapper input {
+            position: absolute;
+            opacity: 0;
+            cursor: pointer;
+            height: 0;
+            width: 0;
+        }
+
+        .checkmark {
+            height: 22px;
+            width: 22px;
+            background-color: #eee;
+            border-radius: 6px;
+            display: inline-block;
+            position: relative;
+            transition: var(--transition);
+        }
+
+        .checkbox-wrapper:hover input ~ .checkmark {
+            background-color: #e0e0e0;
+        }
+
+        .checkbox-wrapper input:checked ~ .checkmark {
+            background-color: var(--pastel-green);
+        }
+
+        .checkmark:after {
+            content: "";
+            position: absolute;
+            display: none;
+            left: 8px;
+            top: 4px;
+            width: 4px;
+            height: 9px;
+            border: solid #3e6b48;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+
+        .checkbox-wrapper input:checked ~ .checkmark:after {
+            display: block;
+        }
+
+        .task-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.2rem;
+            width: 100%;
+        }
+
+        .task-text {
+            font-size: 0.95rem;
+            font-weight: 500;
+            word-break: break-word;
+            outline: none;
+            border-radius: 4px;
+            padding: 2px 4px;
+            transition: var(--transition);
+        }
+
+        .task-text[contenteditable="true"] {
+            background: #f0f4f8;
+            border-bottom: 1px solid var(--accent);
+        }
+
+        .task-meta {
+            display: flex;
+            gap: 0.75rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            align-items: center;
+        }
+
+        .task-tag {
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.65rem;
+        }
+        
+        .tag-Personal { background: var(--pastel-pink); color: #7d3c4f; }
+        .tag-Work { background: var(--pastel-blue); color: #3c587d; }
+        .tag-Shopping { background: var(--pastel-yellow); color: #76632f; }
+        .tag-Ideas { background: var(--pastel-purple); color: #53457a; }
+
+        .task-actions {
+            display: flex;
+            gap: 0.5rem;
+            margin-left: 1rem;
+        }
+
+        .btn-action {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 6px;
+            border-radius: 8px;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-action:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-edit svg { stroke: #6b7280; }
+        .btn-delete svg { stroke: #ef4444; }
+
+        .empty-state {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="app-container">
+        <header>
+            <h1 id="current-date-title">Today's Focus</h1>
+            <p>Organize your day beautifully.</p>
+        </header>
+
+        <div class="list-tabs" id="listTabs">
+            <div class="tab active" onclick="switchList('All')">All Tasks</div>
+            <div class="tab" onclick="switchList('Personal')">Personal</div>
+            <div class="tab" onclick="switchList('Work')">Work</div>
+            <div class="tab" onclick="switchList('Shopping')">Shopping</div>
+            <div class="tab" onclick="switchList('Ideas')">Ideas</div>
+        </div>
+
+        <form class="task-form" id="taskForm" onsubmit="addTask(event)">
+            <div class="input-row">
+                <input type="text" id="taskInput" placeholder="What needs to be done?" required autocomplete="off">
+            </div>
+            <div class="input-row">
+                <input type="datetime-local" id="taskDeadline">
+                <select id="taskListSelect">
+                    <option value="Personal">Personal</option>
+                    <option value="Work">Work</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Ideas">Ideas</option>
+                </select>
+                <button type="submit" class="btn-add">Add</button>
+            </div>
+        </form>
+
+        <ul class="task-list" id="taskListContainer">
+            </ul>
+    </div>
+
+    <script>
+        let tasks = JSON.parse(localStorage.getItem('bloom_tasks')) || [];
+        let currentFilter = 'All';
+
+        // Set human-friendly date header
+        const options = { weekday: 'long', month: 'short', day: 'numeric' };
+        document.getElementById('current-date-title').innerText = new Date().toLocaleDateString('en-US', options);
+
+        function saveTasks() {
+            localStorage.setItem('bloom_tasks', JSON.stringify(tasks));
+            renderTasks();
+        }
+
+        function addTask(e) {
+            e.preventDefault();
+            const input = document.getElementById('taskInput');
+            const deadline = document.getElementById('taskDeadline');
+            const listSelect = document.getElementById('taskListSelect');
+
+            if (!input.value.trim()) return;
+
+            const newTask = {
+                id: Date.now(),
+                text: input.value.trim(),
+                deadline: deadline.value ? new Date(deadline.value).toISOString() : null,
+                list: listSelect.value,
+                completed: false
+            };
+
+            tasks.push(newTask);
+            saveTasks();
+
+            // Reset Form fields elegantly
+            input.value = '';
+            deadline.value = '';
+        }
+
+        function toggleComplete(id) {
+            tasks = tasks.map(task => task.id === id ? { ...task, completed: !task.completed } : task);
+            saveTasks();
+        }
+
+        function deleteTask(id) {
+            tasks = tasks.filter(task => task.id !== id);
+            saveTasks();
+        }
+
+        function editTask(id, btnElement) {
+            const taskItem = btnElement.closest('.task-item');
+            const textElement = taskItem.querySelector('.task-text');
+            const isEditing = textElement.getAttribute('contenteditable') === 'true';
+
+            if (!isEditing) {
+                // Turn editing mode ON
+                textElement.setAttribute('contenteditable', 'true');
+                textElement.focus();
+                // Put cursor at the end of the text
+                const range = document.createRange();
+                const sel = window.getSelection();
+                range.selectNodeContents(textElement);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+                
+                btnElement.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg>`;
+            } else {
+                // Turn editing mode OFF and Save
+                textElement.setAttribute('contenteditable', 'false');
+                tasks = tasks.map(task => task.id === id ? { ...task, text: textElement.innerText.trim() } : task);
+                saveTasks();
+            }
+        }
+
+        function switchList(listName) {
+            currentFilter = listName;
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.toggle('active', tab.textContent.trim() === listName || (listName === 'All' && tab.textContent.includes('All')));
+            });
+            renderTasks();
+        }
+
+        function formatDeadline(isoString) {
+            if (!isoString) return '';
+            const date = new Date(isoString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' @ ' + date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+        }
+
+        function renderTasks() {
+            const container = document.getElementById('taskListContainer');
+            container.innerHTML = '';
+
+            const filteredTasks = tasks.filter(task => currentFilter === 'All' || task.list === currentFilter);
+
+            if (filteredTasks.length === 0) {
+                container.innerHTML = `<li class="empty-state">No tasks here yet. Enjoy your peace!</li>`;
+                return;
+            }
+
+            filteredTasks.forEach(task => {
+                const li = document.createElement('li');
+                li.className = `task-item list-${task.list} ${task.completed ? 'completed' : ''}`;
+                
+                li.innerHTML = `
+                    <div class="task-left">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" ${task.completed ? 'checked' : ''} onchange="toggleComplete(${task.id})">
+                            <span class="checkmark"></span>
+                        </label>
+                        <div class="task-details">
+                            <span class="task-text" onkeydown="if(event.key === 'Enter') { event.preventDefault(); this.blur(); }">${task.text}</span>
+                            <div class="task-meta">
+                                <span class="task-tag tag-${task.list}">${task.list}</span>
+                                ${task.deadline ? `<span>⏰ ${formatDeadline(task.deadline)}</span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="task-actions">
+                        <button class="btn-action btn-edit" onclick="editTask(${task.id}, this)" title="Edit Task">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 1 1 3 3L12 15l-4 1 1-4Z"></path></svg>
+                        </button>
+                        <button class="btn-action btn-delete" onclick="deleteTask(${task.id})" title="Delete Task">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"></path><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path></svg>
+                        </button>
+                    </div>
+                `;
+                
+                // Keep blur update linked to saving data if a user edits text and clicks away
+                const textSpan = li.querySelector('.task-text');
+                textSpan.addEventListener('blur', () => {
+                    tasks = tasks.map(t => t.id === task.id ? { ...t, text: textSpan.innerText.trim() } : t);
+                    localStorage.setItem('bloom_tasks', JSON.stringify(tasks));
+                });
+
+                container.appendChild(li);
+            });
+        }
+
+        // Initial paint
+        renderTasks();
+    </script>
+</body>
+</html>
